@@ -78,6 +78,7 @@ class Player:
         """
         self.name = username
         self.money = money
+        self.bet = 0
         self.cards = []
     
     def get_card_total(self):
@@ -116,7 +117,7 @@ class Dealer:
         """Finds the total
 
         Returns:
-            tuple: total1 and total2 
+            int: total of the cards 
         """
         if len(self.cards) == 0:
             return
@@ -162,7 +163,17 @@ class Card:
         self.suit = suit
 
     def __str__(self):
-        return f'{self.value} of {self.suit}'
+        if self.value == 1:
+            val = 'ace'
+        elif self.value == 11:
+            val = 'jack'
+        elif self.value == 12:
+            val = 'queen'
+        elif self.value == 13:
+            val = 'king'
+        else:
+            val = self.value
+        return f'{val}_of_{self.suit}s'
 
 
 def test():

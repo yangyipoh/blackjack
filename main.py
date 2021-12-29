@@ -50,7 +50,6 @@ class Button:
         Returns:
             Bool: True if the button is clicked
         """
-        print(pos)
         if self.x <= pos[0] <= self.x+self.width and self.y <= pos[1] <= self.y+self.height:
             return True
         return False
