@@ -63,6 +63,9 @@ class BlackjackTable:
             return -1
         self.players[str(player_id)].get_cards(self.deck.draw_card())
         return 0
+    
+    def set_bet(self, player_id):
+        pass
 
 
 class Player:

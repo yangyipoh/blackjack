@@ -2,7 +2,7 @@ import socket
 import pickle
 
 class Network:
-    def __init__(self, server_ip, port_no=5555, buff_size=2048):
+    def __init__(self, server_ip, port_no=5555, buff_size=8192):
         """Creates a network class to handle network functionality for the client
 
         Args:
@@ -14,6 +14,9 @@ class Network:
         self.addr = (server_ip, port_no)
         self.buff_size = buff_size
         self.p_id = self.connect()
+
+    def getP(self):
+        return self.p_id
     
     def connect(self):
         """Establishes a connection between the client and server. Once connection is enstablished, return the ID of the player
@@ -31,10 +34,10 @@ class Network:
         """Send data to the server
 
         Args:
-            data (): Data to be sent
+            data (str): Data to be sent
 
         Returns:
-            : Response from the server
+            BlackjackTable: Response from the server
         """
         try:
             self.client.send(str.encode(data))

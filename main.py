@@ -1,4 +1,5 @@
 import pygame
+from network import Network
 # from blackjack import *
 
 WIDTH = 800
@@ -55,9 +56,8 @@ class Button:
         return False
 
 
-def draw(surface, btn):
+def draw(surface):
     surface.fill((0, 0, 0))
-    btn.draw(surface)
     pygame.display.update()
 
  
@@ -68,12 +68,21 @@ def main():
     pygame.display.set_icon(icon)
     pygame.font.init()
     clock = pygame.time.Clock()
-
-    btn = Button('Test', 0, 0)
+    n = Network('192.168.1.108')
+    player = int(n.getP())
+    print(f'You are: Player {player}')
 
     running = True
     while running:
         clock.tick(60)
+        try:
+            game = n.send("get")
+        except:
+            running = False
+            print('Error when requesting board config')
+            break
+        
+        print(game)
 
         # process events
         for event in pygame.event.get():
@@ -81,11 +90,9 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
-                if btn.click(pos):
-                    print('Clicked')
         
         # display
-        draw(surface, btn)
+        draw(surface)
         
 
 
