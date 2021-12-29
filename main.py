@@ -1,21 +1,22 @@
 import pygame
+# from blackjack import *
 
 WIDTH = 800
 HEIGHT = 600
 
 class Button:
-    def __init__(self, text, x, y, width=150, height=100, colour=(255, 0, 0), text_colour=(255, 255, 255), font_size=40):
+    def __init__(self, text, x, y, width=150, height=100, colour=(255, 0, 0), text_colour=(255, 255, 255), font_size=30):
         """function to create a button on the screen
 
         Args:
             text (str): text in the button
             x (int): x coord of the top left button
             y (int): y coord of the top left button
-            width (int, optional): [description]. Defaults to 150.
-            height (int, optional): [description]. Defaults to 100.
-            colour (tuple, optional): [description]. Defaults to (255, 0, 0).
-            text_colour (tuple, optional): [description]. Defaults to (255, 255, 255).
-            font_size (int, optional): [description]. Defaults to 40.
+            width (int, optional): width of the button. Defaults to 150.
+            height (int, optional): height of the button. Defaults to 100.
+            colour (tuple, optional): colour of the button. Defaults to (255, 0, 0).
+            text_colour (tuple, optional): colour of hte text inside. Defaults to (255, 255, 255).
+            font_size (int, optional): size of the text. Defaults to 40.
         """
         self.text = text
         self.x = x
@@ -27,6 +28,11 @@ class Button:
         self.font_size = font_size
 
     def draw(self, surface):
+        """Draw the button of the screen
+
+        Args:
+            surface (pygame.surface): surface to be drawn
+        """
         pygame.draw.rect(surface, self.colour, (self.x, self.y, self.width, self.height))
         font = pygame.font.SysFont('comicsans', self.font_size)
         text = font.render(self.text, 1, self.text_colour)
@@ -35,6 +41,15 @@ class Button:
         surface.blit(text, (x_center, y_center))
 
     def click(self, pos):
+        """Checks if the button is clicked
+
+        Args:
+            pos (tuple): Position of the mouse
+
+        Returns:
+            Bool: True if the button is clicked
+        """
+        print(pos)
         if self.x <= pos[0] <= self.x+self.width and self.y <= pos[1] <= self.y+self.height:
             return True
         return False
@@ -52,11 +67,15 @@ def main():
     icon = pygame.image.load('asset/blackjack.png')
     pygame.display.set_icon(icon)
     pygame.font.init()
+    clock = pygame.time.Clock()
 
     btn = Button('Test', 0, 0)
 
     running = True
     while running:
+        clock.tick(60)
+
+        # process events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -65,6 +84,7 @@ def main():
                 if btn.click(pos):
                     print('Clicked')
         
+        # display
         draw(surface, btn)
         
 
