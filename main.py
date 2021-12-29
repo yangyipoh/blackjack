@@ -1,21 +1,20 @@
-import os
+import pygame
 
-
-'''
-function to clear the terminal
-'''
-def cls():
-    os.system('cls' if os.name=='nt' else 'clear')
-
-
-def print_menu():
-    print('1. Stand')
-    print('2. Hit')
-    print('3. Split')
-
-
+WIDTH = 800
+HEIGHT = 600
+ 
 def main():
-    print('Hello World')
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption('Blackjack')
+    icon = pygame.image.load('asset/blackjack.png')
+    pygame.display.set_icon(icon)
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        
 
 
 if __name__ == '__main__':
