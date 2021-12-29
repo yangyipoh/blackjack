@@ -54,9 +54,12 @@ def main():
 
         new_player = Player(f'Player {count}')
         count += 1
-        in_game_id = game.join(new_player)
+        err_code, in_game_id = game.join(new_player)
 
-        start_new_thread(threaded_client, (conn, in_game_id, game))
+        if err_code == 0:
+            start_new_thread(threaded_client, (conn, in_game_id, game))
+        else:
+            print('Lobby is too full')
 
 
 if __name__ == '__main__':

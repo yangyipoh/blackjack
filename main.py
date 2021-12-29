@@ -81,8 +81,6 @@ def main():
             running = False
             print('Error when requesting board config')
             break
-        
-        print(game)
 
         # process events
         for event in pygame.event.get():

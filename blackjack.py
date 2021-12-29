@@ -29,13 +29,13 @@ class BlackjackTable:
             player (Player): Player that joined the table
 
         Returns:
-            int: 0 if the player successfully joins the table, -1 if the table is full
+            tuple: (err_code, player_id)
         """
         id = self.find_seat()
         if id == -1:
-            return -1
+            return -1, -1
         self.players[str(id)] = player
-        return 0
+        return 0, id
     
     def deal_cards_init(self):
         self.deck.shuffle_deck()
