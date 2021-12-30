@@ -60,14 +60,30 @@ class Button:
             return True
         return False
     
-    def get_val(self):
+    def get_text(self):
+        """returns the text on the button
+
+        Returns:
+            str: text on button
+        """
         return self.text
 
 
 def preprocessing(btns_array, game, player):
+    """Extract the necessary information from BlackjackTable to display the game
+
+    Args:
+        btns_array (list): List of buttons for a given scene
+        game (BlackjackTable): game returned from the server
+        player (int): player id
+
+    Returns:
+        tuple: (Buttons for the particular scene, which scene to display)
+    """
     scene = game.scene
     btns = btns_array[scene]
 
+    # change the colour of buttons
     if scene == 0:
         if game.players[str(player)].is_ready:
             btns[0].colour = GREEN
@@ -78,6 +94,15 @@ def preprocessing(btns_array, game, player):
 
 
 def draw(surface, buttons, scene, player, game):
+    """Draw the game
+
+    Args:
+        surface (Surface): window
+        buttons (list): list of buttons that needs to be rendered
+        scene (int): scene that needs to be rendered
+        player (int): current player
+        game (BlackjackTable): game returned from the server
+    """
     surface.fill((0, 0, 0))
 
     # var
@@ -160,12 +185,14 @@ def main():
     pygame.font.init()
     clock = pygame.time.Clock()
 
+    # buttons for the game
     btns0 = [Button('Ready', 600, 530)]
     btns1 = [Button('-', 20, 530), Button('+', 350, 530), Button('Bet', 600, 530)]
     btns2 = [Button('Hit', 165, 530), Button('Stand', 455, 530)]
     btns3 = [Button('Continue', 600, 530)]
     btn_array = [btns0, btns1, btns2, btns3]
 
+    # networking
     n = Network('192.168.1.108')
     player = int(n.getP())
     print(f'You are: Player {player}')
@@ -173,6 +200,8 @@ def main():
     running = True
     while running:
         clock.tick(60)
+
+        # get game state
         try:
             game = n.send("get")
         except:
@@ -187,9 +216,11 @@ def main():
             if event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
                 for btn in btns:
+                    # send button information to server
                     if btn.click(pos):
                         n.send(btn.text)
         
+        # extract information
         btns, scene = preprocessing(btn_array, game, player)
 
         # display

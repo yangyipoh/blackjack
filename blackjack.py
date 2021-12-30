@@ -1,20 +1,21 @@
 import random
 
+# const
 MAX_PLAYERS = 5
 DEFAULT_MONEY = 100
 
 class BlackjackTable:
     def __init__(self):
-        self.players = {}
-        self.deck = Deck()
+        self.players = {}           # players in the game
+        self.deck = Deck()          # deck of cards
         self.deck.shuffle_deck()
-        self.current_turn = 0
-        self.dealer = Dealer()
-        self.scene = 0
+        self.current_turn = None    # who's turn is it
+        self.dealer = Dealer()      # dealer's set of cards
+        self.scene = 0              # current scene
 
-        self.total_ready = 0
+        self.total_ready = 0        # total number of players ready
 
-    def find_seat(self):
+    def get_id(self):
         """Finds an unassigned ID for new player
 
         Returns:
@@ -34,33 +35,56 @@ class BlackjackTable:
         Returns:
             tuple: (err_code, player_id)
         """
-        id = self.find_seat()
+        id = self.get_id()
         if id == -1:
             return -1, -1
         self.players[str(id)] = player
         return 0, id
 
     def disconnect(self, player):
+        """Disconnects the player from the game
+
+        Args:
+            player (int): player ID
+        """
         self.does_player_exists(player)
         if self.players[str(player)].is_ready:
             self.total_ready -= 1
         del self.players[str(player)]
 
+    def is_all_player_ready(self):
+        """Check if all the players are ready
+
+        Returns:
+            bool: if all the players are ready
+        """
+        return self.total_ready == len(self.players)
+
+    def reset_ready(self):
+        """Reset the ready counts
+        """
+        for key in self.players.keys():
+            self.players[key].is_ready = False
+        self.total_ready = 0
+
     def player_ready(self, player):
+        """Sets the player status to ready when in lobby
+
+        Args:
+            player (int): player ID
+        """
         self.does_player_exists(player)
         if self.players[str(player)].is_ready:
             return
         self.players[str(player)].is_ready = True
         self.total_ready += 1
 
-        if self.total_ready == len(self.players):
-            self.scene += 1
-
-    def does_player_exists(self, player):
-        if str(player) not in self.players.keys():
-            raise TypeError('No player found')
+        if self.is_all_player_ready():
+            self.scene = 1
     
     def deal_cards_init(self):
+        """Give dealer and all players 2 cards
+        """
         self.deck.shuffle_deck()
 
         # Dealer gets 2 cards
@@ -86,9 +110,18 @@ class BlackjackTable:
             return -1
         self.players[str(player_id)].get_cards(self.deck.draw_card())
         return 0
-    
-    def set_bet(self, player_id):
-        pass
+
+    def does_player_exists(self, player):
+        """Check if player exists
+
+        Args:
+            player (int): player ID
+
+        Raises:
+            TypeError: When player ID doesn't exists
+        """
+        if str(player) not in self.players.keys():
+            raise TypeError('No player found')
 
 
 class Player:
@@ -127,6 +160,11 @@ class Player:
         return total2
     
     def get_cards(self, card):
+        """Add Card for the player
+
+        Args:
+            card (Card): card to be added to the hand
+        """
         self.cards.append(card)
     
 
@@ -198,44 +236,3 @@ class Card:
         else:
             val = self.value
         return f'{val}_of_{self.suit}s'
-
-
-def test():
-    game = BlackjackTable()
-    p1 = Player('Emma')
-    p2 = Player('Jackie')
-
-    game.join(p1)
-    game.join(p2)
-
-    game.deal_cards_init()
-
-    print('Dealer\'s Cards: ')
-    print(game.dealer.cards[0])
-    print(game.dealer.cards[1])
-    print(f'Dealer\'s Value: {game.dealer.get_card_total()}')
-    print()
-
-    print('Player1\'s Cards: ')
-    print(game.players['0'].cards[0])
-    print(game.players['0'].cards[1])
-    print(f"Player1\'s Value: {game.players['0'].get_card_total()}")
-    print()
-
-    print('Player2\'s Cards: ')
-    print(game.players['1'].cards[0])
-    print(game.players['1'].cards[1])
-    print(f"Player2\'s Value: {game.players['1'].get_card_total()}")
-    print()
-
-    game.add_card(0)
-    print('Player1\'s Added Cards: ')
-    print(game.players['0'].cards[0])
-    print(game.players['0'].cards[1])
-    print(game.players['0'].cards[2])
-    print(f"Player1\'s Value: {game.players['0'].get_card_total()}")
-    print()
-
-
-if __name__ == "__main__":
-    test()
