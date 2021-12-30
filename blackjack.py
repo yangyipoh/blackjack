@@ -107,8 +107,11 @@ class BlackjackTable:
         player.is_ready = True
         self.total_ready += 1
 
+        # transition
         if self.is_all_player_ready():
             self.scene = 2
+            self.reset_ready()
+            self.deal_cards_init()
     
     def deal_cards_init(self):
         """Give dealer and all players 2 cards
@@ -167,25 +170,7 @@ class Player:
         self.cards = []
     
     def get_card_total(self):
-        """Finds the total
-
-        Returns:
-            tuple: total1 and total2 
-        """
-        if len(self.cards) == 0:
-            return
-        total1 = 0
-        total2 = 0
-        for card in self.cards:
-            if card.value == 1:
-                total1 += 1
-                total2 += 11
-            else:
-                total1 += min(card.value, 10)
-                total2 += min(card.value, 10)
-        if (total2 > 21):
-            return total1
-        return total2
+        pass
     
     def get_cards(self, card):
         """Add Card for the player

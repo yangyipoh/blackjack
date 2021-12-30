@@ -37,6 +37,10 @@ def threaded_client(conn, in_game_id, game, buff_size=8192):
                 game.add_bet(in_game_id)
             elif data == 'Bet':
                 game.confirm_bet(in_game_id)
+            elif data == 'Hit':
+                pass
+            elif data == 'Stand':
+                pass
 
             conn.sendall(pickle.dumps(game))
         except:

@@ -125,7 +125,7 @@ def draw(surface, buttons, scene, player, game):
         card_img = pygame.image.load(f'asset/cards/{card}.png')
         card_img = pygame.transform.scale(card_img, (83, 121))
         x = (box_width*2+offset*3) + 20
-        y = 40+15*j
+        y = 40+17*j
         surface.blit(card_img, (x, y))
     
     # rectangle for the players
@@ -156,7 +156,7 @@ def draw(surface, buttons, scene, player, game):
                 card_img = pygame.image.load(f'asset/cards/{card}.png')
                 card_img = pygame.transform.scale(card_img, (83, 121))
                 x = offset+(offset+box_width)*i+20
-                y = 300+15*j
+                y = 300+17*j
                 surface.blit(card_img, (x, y))
 
             # if scene 1, show bets
