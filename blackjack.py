@@ -10,6 +10,9 @@ class BlackjackTable:
         self.deck.shuffle_deck()
         self.current_turn = 0
         self.dealer = Dealer()
+        self.scene = 0
+
+        self.total_ready = 0
 
     def find_seat(self):
         """Finds an unassigned ID for new player
@@ -36,6 +39,26 @@ class BlackjackTable:
             return -1, -1
         self.players[str(id)] = player
         return 0, id
+
+    def disconnect(self, player):
+        self.does_player_exists(player)
+        if self.players[str(player)].is_ready:
+            self.total_ready -= 1
+        del self.players[str(player)]
+
+    def player_ready(self, player):
+        self.does_player_exists(player)
+        if self.players[str(player)].is_ready:
+            return
+        self.players[str(player)].is_ready = True
+        self.total_ready += 1
+
+        if self.total_ready == len(self.players):
+            self.scene += 1
+
+    def does_player_exists(self, player):
+        if str(player) not in self.players.keys():
+            raise TypeError('No player found')
     
     def deal_cards_init(self):
         self.deck.shuffle_deck()
@@ -79,6 +102,7 @@ class Player:
         self.name = username
         self.money = money
         self.bet = 0
+        self.is_ready = False
         self.cards = []
     
     def get_card_total(self):

@@ -2,11 +2,17 @@ import pygame
 from network import Network
 # from blackjack import *
 
-WIDTH = 800
+WIDTH = 745
 HEIGHT = 600
 
+# colours
+RED = (255, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+
+
 class Button:
-    def __init__(self, text, x, y, width=150, height=100, colour=(255, 0, 0), text_colour=(255, 255, 255), font_size=30):
+    def __init__(self, text, x, y, width=120, height=50, colour=(255, 0, 0), text_colour=(255, 255, 255), font_size=30):
         """function to create a button on the screen
 
         Args:
@@ -53,10 +59,96 @@ class Button:
         if self.x <= pos[0] <= self.x+self.width and self.y <= pos[1] <= self.y+self.height:
             return True
         return False
+    
+    def get_val(self):
+        return self.text
 
 
-def draw(surface):
+def preprocessing(btns_array, game, player):
+    scene = game.scene
+    btns = btns_array[scene]
+
+    if scene == 0:
+        if game.players[str(player)].is_ready:
+            btns[0].colour = GREEN
+        else:
+            btns[0].colour = RED
+            
+    return btns, scene
+
+
+def draw(surface, buttons, scene, player, game):
     surface.fill((0, 0, 0))
+
+    # var
+    font = pygame.font.SysFont('comicsans', 25)
+    box_width = 125
+    box_height = 150
+    offset = 20
+
+    # rectangle for the dealer
+    pygame.draw.rect(surface, RED, ((box_width*2+offset*3), 40, box_width, box_height), width=1)
+
+    # dealer cards
+    cards = game.dealer.cards
+    for j, card in enumerate(cards):
+        card_img = pygame.image.load(f'asset/cards/{card}.png')
+        card_img = pygame.transform.scale(card_img, (83, 121))
+        x = (box_width*2+offset*3) + 20
+        y = 40+15*j
+        surface.blit(card_img, (x, y))
+    
+    # rectangle for the players
+    for i in range(5):
+        pygame.draw.rect(surface, RED, (offset+(offset+box_width)*i, 300, box_width, box_height), width=1)
+
+    for i in range(5):
+        # connected players
+        if str(i) in game.players.keys():
+            player_data = game.players[str(i)]
+            
+            # player name
+            text = font.render(player_data.name, 1, WHITE)
+            x_center = offset+(offset+box_width)*i + round(box_width/2) - round(text.get_width()/2)
+            y_center = 230
+            surface.blit(text, (x_center, y_center))
+
+            # player cash
+            money_str = f'${player_data.money}'
+            text = font.render(money_str, 1, WHITE)
+            x_center = offset+(offset+box_width)*i + round(box_width/2) - round(text.get_width()/2)
+            y_center = 260
+            surface.blit(text, (x_center, y_center))
+
+            # player card
+            cards = player_data.cards
+            for j, card in enumerate(cards):
+                card_img = pygame.image.load(f'asset/cards/{card}.png')
+                card_img = pygame.transform.scale(card_img, (83, 121))
+                x = offset+(offset+box_width)*i+20
+                y = 300+15*j
+                surface.blit(card_img, (x, y))
+
+            # if scene 1, show bets
+            if scene == 1 and player == i:
+                gap_width = 210
+                gap_height = 50
+                bet_str = f'${player_data.bet}'
+                text = font.render(bet_str, 1, WHITE)
+                x_center = 140 + round(gap_width/2) - round(text.get_width()/2)
+                y_center = 530 + round(gap_height/2) - round(text.get_height()/2)
+                surface.blit(text, (x_center, y_center))
+
+        # waiting for players
+        else:
+            text = font.render('Waiting...', 1, WHITE)
+            x_center = offset+(offset+box_width)*i + round(box_width/2) - round(text.get_width()/2)
+            y_center = 230
+            surface.blit(text, (x_center, y_center))
+    
+    # buttons
+    for btn in buttons:
+        btn.draw(surface)
     pygame.display.update()
 
  
@@ -67,6 +159,13 @@ def main():
     pygame.display.set_icon(icon)
     pygame.font.init()
     clock = pygame.time.Clock()
+
+    btns0 = [Button('Ready', 600, 530)]
+    btns1 = [Button('-', 20, 530), Button('+', 350, 530), Button('Bet', 600, 530)]
+    btns2 = [Button('Hit', 165, 530), Button('Stand', 455, 530)]
+    btns3 = [Button('Continue', 600, 530)]
+    btn_array = [btns0, btns1, btns2, btns3]
+
     n = Network('192.168.1.108')
     player = int(n.getP())
     print(f'You are: Player {player}')
@@ -87,11 +186,15 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
+                for btn in btns:
+                    if btn.click(pos):
+                        n.send(btn.text)
         
-        # display
-        draw(surface)
-        
+        btns, scene = preprocessing(btn_array, game, player)
 
+        # display
+        draw(surface, btns, scene, player, game)
+        
 
 if __name__ == '__main__':
     main()

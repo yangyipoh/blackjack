@@ -17,9 +17,14 @@ def threaded_client(conn, in_game_id, game, buff_size=8192):
             # possible moves to do in the game
             if data == 'get':
                 pass
-            elif data == 'hit':
+            elif data == 'Ready':
+                game.player_ready(in_game_id)
+                print(f'{game.players[str(in_game_id)].name} is ready')
+            elif data == '-':
                 pass
-            elif data == 'stand':
+            elif data == '+':
+                pass
+            elif data == 'Bet':
                 pass
 
             conn.sendall(pickle.dumps(game))
@@ -27,6 +32,7 @@ def threaded_client(conn, in_game_id, game, buff_size=8192):
             break
     print('Connection lost')
     conn.close()
+    game.disconnect(in_game_id)
 
 
 def main():
