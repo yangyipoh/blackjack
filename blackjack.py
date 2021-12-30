@@ -12,7 +12,6 @@ class BlackjackTable:
         self.current_turn = None    # who's turn is it
         self.dealer = Dealer()      # dealer's set of cards
         self.scene = 0              # current scene
-
         self.total_ready = 0        # total number of players ready
 
     def get_id(self):
@@ -58,7 +57,10 @@ class BlackjackTable:
         Returns:
             bool: if all the players are ready
         """
-        return self.total_ready == len(self.players)
+        for key in self.players.keys():
+            if not self.players[key].is_ready:
+                return False
+        return True
 
     def reset_ready(self):
         """Reset the ready counts
@@ -81,6 +83,32 @@ class BlackjackTable:
 
         if self.is_all_player_ready():
             self.scene = 1
+            self.reset_ready()
+
+    def add_bet(self, id):
+        self.does_player_exists(id)
+        player = self.players[str(id)]
+        if player.money > 0 and not player.is_ready:
+            player.bet += 1
+            player.money -= 1
+
+    def sub_bet(self, id):
+        self.does_player_exists(id)
+        player = self.players[str(id)]
+        if player.bet > 0 and not player.is_ready:
+            player.bet -= 1
+            player.money += 1
+
+    def confirm_bet(self, id):
+        self.does_player_exists(id)
+        player = self.players[str(id)]
+        if player.is_ready or player.bet == 0:
+            return
+        player.is_ready = True
+        self.total_ready += 1
+
+        if self.is_all_player_ready():
+            self.scene = 2
     
     def deal_cards_init(self):
         """Give dealer and all players 2 cards

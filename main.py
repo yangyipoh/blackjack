@@ -89,6 +89,11 @@ def preprocessing(btns_array, game, player):
             btns[0].colour = GREEN
         else:
             btns[0].colour = RED
+    elif scene == 1:
+        if game.players[str(player)].is_ready:
+            btns[2].colour = GREEN
+        else:
+            btns[2].colour = RED
             
     return btns, scene
 

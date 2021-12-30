@@ -32,11 +32,11 @@ def threaded_client(conn, in_game_id, game, buff_size=8192):
                 game.player_ready(in_game_id)
                 print(f'{game.players[str(in_game_id)].name} is ready')
             elif data == '-':
-                pass
+                game.sub_bet(in_game_id)
             elif data == '+':
-                pass
+                game.add_bet(in_game_id)
             elif data == 'Bet':
-                pass
+                game.confirm_bet(in_game_id)
 
             conn.sendall(pickle.dumps(game))
         except:
