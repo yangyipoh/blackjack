@@ -9,10 +9,9 @@ class BlackjackTable:
         self.players = {}           # players in the game
         self.deck = Deck()          # deck of cards
         self.deck.shuffle_deck()
-        self.current_turn = None    # who's turn is it
+        self.current_turn_idx = 0    # who's turn is it
         self.dealer = Dealer()      # dealer's set of cards
         self.scene = 0              # current scene
-        self.total_ready = 0        # total number of players ready
 
     def get_id(self):
         """Finds an unassigned ID for new player
@@ -47,9 +46,8 @@ class BlackjackTable:
             player (int): player ID
         """
         self.does_player_exists(player)
-        if self.players[str(player)].is_ready:
-            self.total_ready -= 1
         del self.players[str(player)]
+        self.reset_ready()
 
     def is_all_player_ready(self):
         """Check if all the players are ready
@@ -63,11 +61,22 @@ class BlackjackTable:
         return True
 
     def reset_ready(self):
-        """Reset the ready counts
+        """Reset the ready status
         """
         for key in self.players.keys():
             self.players[key].is_ready = False
-        self.total_ready = 0
+
+    def reset_busted(self):
+        """Reset the busted status
+        """
+        for key in self.players.keys():
+            self.players[key].has_busted = False
+
+    def reset_has_won(self):
+        """Reset the busted status
+        """
+        for key in self.players.keys():
+            self.players[key].has_won = None
 
     def player_ready(self, player):
         """Sets the player status to ready when in lobby
@@ -79,7 +88,6 @@ class BlackjackTable:
         if self.players[str(player)].is_ready:
             return
         self.players[str(player)].is_ready = True
-        self.total_ready += 1
 
         if self.is_all_player_ready():
             self.scene = 1
@@ -105,7 +113,6 @@ class BlackjackTable:
         if player.is_ready or player.bet == 0:
             return
         player.is_ready = True
-        self.total_ready += 1
 
         # transition
         if self.is_all_player_ready():
@@ -121,11 +128,63 @@ class BlackjackTable:
         # Dealer gets 2 cards
         self.dealer.get_cards(self.deck.draw_card())
         self.dealer.get_cards(self.deck.draw_card())
+        self.dealer.cards[1].hidden = True
 
         # each player gets 2 cards
         for key in self.players.keys():
             self.players[key].get_cards(self.deck.draw_card())
             self.players[key].get_cards(self.deck.draw_card())
+
+    def hit(self, player_id):
+        keys = list(self.players.keys())
+        curr_turn = keys[self.current_turn_idx]
+        if str(player_id) != curr_turn or self.players[curr_turn].has_busted:
+            return
+        self.add_card(player_id)
+
+        self.players[curr_turn].check_busted()
+        
+
+    def stand(self, player_id):
+        keys = list(self.players.keys())
+        curr_turn = keys[self.current_turn_idx]
+        if str(player_id) != curr_turn:
+            return
+        self.current_turn_idx += 1
+        if self.current_turn_idx >= len(self.players):
+            self.scene += 1
+            self.dealers_turn()
+
+    def dealers_turn(self):
+        dealer = self.dealer
+        dealer.cards[1].hidden = False
+
+        total_dealer = dealer.get_card_total()
+        while total_dealer < 17:
+            dealer.get_cards(self.deck.draw_card())
+            total_dealer = dealer.get_card_total()
+
+        # calculate winners
+        for key in self.players.keys():
+            player = self.players[key]
+            total_player = player.get_card_total()
+            # if player bust or player total < dealer total, lose the bet
+            if player.has_busted or total_player < total_dealer <= 21:
+                player.has_won = 0
+
+            # if player ties with dealer, take the bet
+            elif total_player == total_dealer:
+                player.money += player.bet
+                player.has_won = 1
+
+            # if player is higher than dealer, double the bet
+            elif total_player > total_dealer or total_dealer > 21:
+                player.money += 2*player.bet
+                player.has_won = 2
+            
+            player.bet = 0
+
+        
     
     def add_card(self, player_id):
         """Draws a card for a given player
@@ -136,11 +195,30 @@ class BlackjackTable:
         Returns:
             int: 0 if the card is successfully drawn, -1 if the player has already busted
         """
-        assert str(player_id) in self.players.keys()
+        self.does_player_exists(player_id)
         if self.players[str(player_id)].get_card_total() > 21:
             return -1
         self.players[str(player_id)].get_cards(self.deck.draw_card())
         return 0
+
+    def reset(self, player_id):
+        self.does_player_exists(player_id)
+        if self.players[str(player_id)].is_ready:
+            return
+        self.players[str(player_id)].is_ready = True
+        if self.is_all_player_ready():
+            self.current_turn_idx = 0
+            # clear dealers and players hand
+            self.dealer.cards = []
+
+            for key in self.players.keys():
+                self.players[key].cards = []
+
+            # reset deck
+            self.deck.reset_deck()
+
+            self.scene = 0
+            self.reset_ready()
 
     def does_player_exists(self, player):
         """Check if player exists
@@ -168,9 +246,29 @@ class Player:
         self.bet = 0
         self.is_ready = False
         self.cards = []
+        self.has_busted = False 
+        self.has_won = None     # 0 --> lost, 1 --> tie, 2 --> won
+
+    def check_busted(self):
+        total = self.get_card_total()
+        if total > 21:
+            self.has_busted = True
     
     def get_card_total(self):
-        pass
+        if len(self.cards) == 0:
+            return
+        total = 0
+        aces = 0
+        for card in self.cards:
+            if card.value == 1:
+                aces += 1
+            total += min(card.value, 10)
+        while aces != 0:
+            if total+10 > 21:
+                break
+            total += 10
+            aces -= 1
+        return total 
     
     def get_cards(self, card):
         """Add Card for the player
@@ -189,29 +287,27 @@ class Dealer:
         self.cards.append(card)
     
     def get_card_total(self):
-        """Finds the total
-
-        Returns:
-            int: total of the cards 
-        """
         if len(self.cards) == 0:
             return
-        total1 = 0
-        total2 = 0
+        total = 0
+        aces = 0
         for card in self.cards:
             if card.value == 1:
-                total1 += 1
-                total2 += 11
-            else:
-                total1 += min(card.value, 10)
-                total2 += min(card.value, 10)
-        if (total2 > 21):
-            return total1
-        return total2
+                aces += 1
+            total += min(card.value, 10)
+        while aces != 0:
+            if total+10 > 21:
+                break
+            total += 10
+            aces -= 1
+        return total
 
 
 class Deck:
     def __init__(self):
+        self.cards_lst = self.gen_cards()
+
+    def reset_deck(self):
         self.cards_lst = self.gen_cards()
 
     def gen_cards(self):
@@ -236,8 +332,11 @@ class Card:
         """
         self.value = value
         self.suit = suit
+        self.hidden = False
 
     def __str__(self):
+        if self.hidden:
+            return 'red_joker'
         if self.value == 1:
             val = 'ace'
         elif self.value == 11:
@@ -249,3 +348,44 @@ class Card:
         else:
             val = self.value
         return f'{val}_of_{self.suit}s'
+
+
+def test():
+    game = BlackjackTable()
+    p1 = Player('Emma')
+    p2 = Player('Jackie')
+
+    game.join(p1)
+    game.join(p2)
+
+    game.deal_cards_init()
+
+    print('Dealer\'s Cards: ')
+    print(game.dealer.cards[0])
+    print(game.dealer.cards[1])
+    print(f'Dealer\'s Value: {game.dealer.get_card_total()}')
+    print()
+
+    print('Player1\'s Cards: ')
+    print(game.players['0'].cards[0])
+    print(game.players['0'].cards[1])
+    print(f"Player1\'s Value: {game.players['0'].get_card_total()}")
+    print()
+
+    print('Player2\'s Cards: ')
+    print(game.players['1'].cards[0])
+    print(game.players['1'].cards[1])
+    print(f"Player2\'s Value: {game.players['1'].get_card_total()}")
+    print()
+
+    game.add_card(0)
+    print('Player1\'s Added Cards: ')
+    print(game.players['0'].cards[0])
+    print(game.players['0'].cards[1])
+    print(game.players['0'].cards[2])
+    print(f"Player1\'s Value: {game.players['0'].get_card_total()}")
+    print()
+
+
+if __name__ == "__main__":
+    test()

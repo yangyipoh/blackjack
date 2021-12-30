@@ -84,7 +84,7 @@ def preprocessing(btns_array, game, player):
     btns = btns_array[scene]
 
     # change the colour of buttons
-    if scene == 0:
+    if scene == 0 or scene == 3:
         if game.players[str(player)].is_ready:
             btns[0].colour = GREEN
         else:
@@ -94,6 +94,18 @@ def preprocessing(btns_array, game, player):
             btns[2].colour = GREEN
         else:
             btns[2].colour = RED
+    elif scene == 2:
+        keys = list(game.players.keys())
+        curr_turn = keys[game.current_turn_idx]
+        if curr_turn != str(player):
+            btns[0].colour = RED
+            btns[1].colour = RED
+        else:
+            btns[1].colour = GREEN
+            if game.players[curr_turn].has_busted:
+                btns[0].colour = RED
+            else:
+                btns[0].colour = GREEN
             
     return btns, scene
 
@@ -168,6 +180,25 @@ def draw(surface, buttons, scene, player, game):
                 x_center = 140 + round(gap_width/2) - round(text.get_width()/2)
                 y_center = 530 + round(gap_height/2) - round(text.get_height()/2)
                 surface.blit(text, (x_center, y_center))
+
+            # if scene 3, show if player has won or lost
+            if scene == 3 and player == i:
+                status = player_data.has_won
+                if status == 0:
+                    status_str = 'Lose'
+                elif status == 1:
+                    status_str = 'Tie'
+                elif status == 2:
+                    status_str = 'Win'
+                else:
+                    status_str = 'Error'
+
+                status_font = pygame.font.SysFont('comicsans', 45)
+                text = status_font.render(status_str, 1, WHITE)
+                x_center = 30
+                y_center = 30
+                surface.blit(text, (x_center, y_center))
+
 
         # waiting for players
         else:

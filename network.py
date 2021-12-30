@@ -40,7 +40,8 @@ class Network:
             BlackjackTable: Response from the server
         """
         try:
-            self.client.send(str.encode(data))
-            return pickle.loads(self.client.recv(self.buff_size))
+            self.client.sendall(str.encode(data))
+            game = self.client.recv(self.buff_size)
+            return pickle.loads(game)
         except socket.error as e:
             print(e)

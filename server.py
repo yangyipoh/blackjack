@@ -14,7 +14,7 @@ def threaded_client(conn, in_game_id, game, buff_size=8192):
         buff_size (int, optional): buffer size to be sent. Defaults to 8192.
     """
     # send game id to client to let them know which ID they are
-    conn.send(str.encode(str(in_game_id)))
+    conn.sendall(str.encode(str(in_game_id)))
 
     while True:
         try:
@@ -38,9 +38,11 @@ def threaded_client(conn, in_game_id, game, buff_size=8192):
             elif data == 'Bet':
                 game.confirm_bet(in_game_id)
             elif data == 'Hit':
-                pass
+                game.hit(in_game_id)
             elif data == 'Stand':
-                pass
+                game.stand(in_game_id)
+            elif data == 'Continue':
+                game.reset(in_game_id)
 
             conn.sendall(pickle.dumps(game))
         except:

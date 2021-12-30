@@ -149,7 +149,7 @@ def main():
     btns1 = [Button('-', 20, 530), Button('+', 350, 530), Button('Bet', 600, 530)]
     btns2 = [Button('Hit', 165, 530), Button('Stand', 455, 530)]
     btns3 = [Button('Continue', 600, 530)]
-    scene = 0
+    scene = 3
 
     game = BlackjackTable()
     p1 = Player('Mandy')
