@@ -2,7 +2,7 @@ import socket
 import pickle
 
 class Network:
-    def __init__(self, server_ip, port_no=5555, buff_size=8192):
+    def __init__(self, server_ip, port_no=5555, buff_size=8192, lobby_id='', name=''):
         """Creates a network class to handle network functionality for the client
 
         Args:
@@ -13,12 +13,12 @@ class Network:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.addr = (server_ip, port_no)
         self.buff_size = buff_size
-        self.p_id = self.connect()
+        self.p_id = self.connect(lobby_id, name)
 
     def getP(self):
         return self.p_id
     
-    def connect(self):
+    def connect(self, lobby_id, name):
         """Establishes a connection between the client and server. Once connection is enstablished, return the ID of the player
 
         Returns:
@@ -26,6 +26,9 @@ class Network:
         """
         try:
             self.client.connect(self.addr)
+
+            # send lobby ID
+            self.client.sendall(str.encode(lobby_id + ',' + name))
             return self.client.recv(self.buff_size).decode()
         except:
             pass

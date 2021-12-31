@@ -214,8 +214,24 @@ def draw(surface, buttons, scene, player, game):
 
  
 def main():
+    # networking
+    n = Network('192.168.1.108')
+
+    # get return message from server
+    msg = n.getP()
+
+    if msg == 'Invalid lobby':
+        print('Invalid lobby ID')
+        return
+    elif msg == 'Lobby full':
+        print('Lobby is too full')
+        return
+
+    player = int(msg)
+    print(f'You are: Player {player}')
+
     surface = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption('Blackjack')
+    pygame.display.set_caption(f'Blackjack: {player}')
     icon = pygame.image.load('asset/blackjack.png')
     pygame.display.set_icon(icon)
     pygame.font.init()
@@ -227,11 +243,6 @@ def main():
     btns2 = [Button('Hit', 165, 530), Button('Stand', 455, 530)]
     btns3 = [Button('Continue', 600, 530)]
     btn_array = [btns0, btns1, btns2, btns3]
-
-    # networking
-    n = Network('192.168.1.108')
-    player = int(n.getP())
-    print(f'You are: Player {player}')
 
     running = True
     while running:

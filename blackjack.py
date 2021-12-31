@@ -1,4 +1,5 @@
 import random
+import time
 
 # const
 MAX_PLAYERS = 5
@@ -6,12 +7,12 @@ DEFAULT_MONEY = 100
 
 class BlackjackTable:
     def __init__(self):
-        self.players = {}           # players in the game
-        self.deck = Deck()          # deck of cards
+        self.players = {}               # players in the game
+        self.deck = Deck()              # deck of cards
         self.deck.shuffle_deck()
-        self.current_turn_idx = 0    # who's turn is it
-        self.dealer = Dealer()      # dealer's set of cards
-        self.scene = 0              # current scene
+        self.current_turn_idx = None    # who's turn is it
+        self.dealer = Dealer()          # dealer's set of cards
+        self.scene = 0                  # current scene
 
     def get_id(self):
         """Finds an unassigned ID for new player
@@ -36,6 +37,8 @@ class BlackjackTable:
         id = self.get_id()
         if id == -1:
             return -1, -1
+        while self.scene != 0:
+            time.sleep(2)
         self.players[str(id)] = player
         return 0, id
 
@@ -119,21 +122,73 @@ class BlackjackTable:
             self.scene = 2
             self.reset_ready()
             self.deal_cards_init()
+            self.next_turn()
+
+    def next_turn(self):
+        if self.current_turn_idx is None:
+            self.current_turn_idx = 0
+        else:
+            self.current_turn_idx += 1
+
+        # if next player is nobody, it's dealer's turn
+        if self.current_turn_idx >= len(self.players):
+            self.scene += 1
+            self.dealers_turn()
+            return
+
+        # keep iterating through until it goes through all player or player hasn't won
+        keys = list(self.players.keys())
+        curr_turn = keys[self.current_turn_idx]
+        curr_player = self.players[curr_turn]
+        
+        while curr_player.has_won == 2:
+            self.current_turn_idx += 1
+            if self.current_turn_idx >= len(self.players):
+                break
+            curr_turn = keys[self.current_turn_idx]
+            curr_player = self.players[curr_turn]
+
+        if self.current_turn_idx >= len(self.players):
+            self.scene += 1
+            self.dealers_turn()
     
     def deal_cards_init(self):
         """Give dealer and all players 2 cards
         """
         self.deck.shuffle_deck()
 
-        # Dealer gets 2 cards
+        # Dealer gets 2 cards and see if blackjack occured
         self.dealer.get_cards(self.deck.draw_card())
         self.dealer.get_cards(self.deck.draw_card())
         self.dealer.cards[1].hidden = True
+        blackjack_dealer = self.dealer.has_blackjacked()
 
         # each player gets 2 cards
         for key in self.players.keys():
             self.players[key].get_cards(self.deck.draw_card())
             self.players[key].get_cards(self.deck.draw_card())
+            blackjack_player = self.players[key].has_blackjacked()
+            
+            # if dealer blackjacks
+            if blackjack_dealer:
+                # if player didn't blackjack, they lose
+                if not blackjack_player:
+                    self.players[key].has_won = 0
+                    self.players[key].bet = 0
+                # if player blackjack, they tie
+                else:
+                    self.players[key].has_won = 1
+                    self.players[key].money += self.players[key].bet
+                    self.players[key].bet = 0
+            # if player blackjacks and dealer doesn'ts
+            elif blackjack_player:
+                print(f'{self.players[key].name} has Blackjacked')
+                self.players[key].has_won = 2
+        
+        if blackjack_dealer:
+            print(f'Dealer Blackjacked')
+            self.scene = 3
+            self.dealer.cards[1].hidden = False
 
     def hit(self, player_id):
         keys = list(self.players.keys())
@@ -150,10 +205,7 @@ class BlackjackTable:
         curr_turn = keys[self.current_turn_idx]
         if str(player_id) != curr_turn:
             return
-        self.current_turn_idx += 1
-        if self.current_turn_idx >= len(self.players):
-            self.scene += 1
-            self.dealers_turn()
+        self.next_turn()
 
     def dealers_turn(self):
         dealer = self.dealer
@@ -184,8 +236,6 @@ class BlackjackTable:
             
             player.bet = 0
 
-        
-    
     def add_card(self, player_id):
         """Draws a card for a given player
 
@@ -207,7 +257,9 @@ class BlackjackTable:
             return
         self.players[str(player_id)].is_ready = True
         if self.is_all_player_ready():
-            self.current_turn_idx = 0
+            self.reset_has_won()
+            self.reset_busted()
+            self.current_turn_idx = None
             # clear dealers and players hand
             self.dealer.cards = []
 
@@ -277,6 +329,10 @@ class Player:
             card (Card): card to be added to the hand
         """
         self.cards.append(card)
+
+    def has_blackjacked(self):
+        assert len(self.cards) == 2
+        return self.get_card_total() == 21
     
 
 class Dealer:
@@ -302,10 +358,16 @@ class Dealer:
             aces -= 1
         return total
 
+    def has_blackjacked(self):
+        assert len(self.cards) == 2
+        return self.get_card_total() == 21
+
 
 class Deck:
     def __init__(self):
         self.cards_lst = self.gen_cards()
+        self.cards_lst[-3].value = 1
+        self.cards_lst[-4].value = 10
 
     def reset_deck(self):
         self.cards_lst = self.gen_cards()
