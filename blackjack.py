@@ -284,6 +284,15 @@ class BlackjackTable:
         if str(player) not in self.players.keys():
             raise TypeError('No player found')
 
+    def set_money(self, player_id, amount):
+        try:
+            self.does_player_exists(player_id)
+            player = self.players[str(player_id)]
+            player.money = int(amount)
+        except TypeError:
+            return
+
+
 
 class Player:
     def __init__(self, username, money=DEFAULT_MONEY):
@@ -410,44 +419,3 @@ class Card:
         else:
             val = self.value
         return f'{val}_of_{self.suit}s'
-
-
-def test():
-    game = BlackjackTable()
-    p1 = Player('Emma')
-    p2 = Player('Jackie')
-
-    game.join(p1)
-    game.join(p2)
-
-    game.deal_cards_init()
-
-    print('Dealer\'s Cards: ')
-    print(game.dealer.cards[0])
-    print(game.dealer.cards[1])
-    print(f'Dealer\'s Value: {game.dealer.get_card_total()}')
-    print()
-
-    print('Player1\'s Cards: ')
-    print(game.players['0'].cards[0])
-    print(game.players['0'].cards[1])
-    print(f"Player1\'s Value: {game.players['0'].get_card_total()}")
-    print()
-
-    print('Player2\'s Cards: ')
-    print(game.players['1'].cards[0])
-    print(game.players['1'].cards[1])
-    print(f"Player2\'s Value: {game.players['1'].get_card_total()}")
-    print()
-
-    game.add_card(0)
-    print('Player1\'s Added Cards: ')
-    print(game.players['0'].cards[0])
-    print(game.players['0'].cards[1])
-    print(game.players['0'].cards[2])
-    print(f"Player1\'s Value: {game.players['0'].get_card_total()}")
-    print()
-
-
-if __name__ == "__main__":
-    test()

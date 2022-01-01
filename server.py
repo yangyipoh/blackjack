@@ -2,13 +2,15 @@ import socket
 from _thread import *
 import pickle
 from blackjack import *
+import argparse
+
+import os
 
 
-LOBBY_ID = ''
-FIND_OPEN_PORT = False
+ADMIN_KEY = 'kYeVsv1o2qfuBUP508rl'
 
 
-def threaded_client(conn, count, game, buff_size=8192):
+def threaded_client(conn, count, game, lobby_id, buff_size=8192):
     """Client thread. Spawns when new client is added
 
     Args:
@@ -19,10 +21,16 @@ def threaded_client(conn, count, game, buff_size=8192):
     """
 
     data = conn.recv(buff_size).decode()
-    lobby_id, name = data.split(',')
-    if lobby_id != LOBBY_ID:
-        print('Invalid Lobby')
-        conn.sendall(str.encode(str('Invalid lobby')))
+    lobby_id_parse, name = data.split(',')
+
+    if lobby_id_parse == lobby_id and name == ADMIN_KEY:
+        conn.sendall(str.encode(str('Admin')))
+        admin_client(conn, game, buff_size)
+        return
+
+    # wrong lobby id
+    if lobby_id_parse != lobby_id:
+        conn.sendall(str.encode(str(-1)))
         conn.close()
         return
     
@@ -31,9 +39,10 @@ def threaded_client(conn, count, game, buff_size=8192):
         name = f'Player {count}'
     new_player = Player(name)
     err_code, in_game_id = game.join(new_player)
+
+    # lobby is too full
     if err_code == -1:
-        print('Lobby is too full')
-        conn.sendall(str.encode(str('Lobby full')))
+        conn.sendall(str.encode(str(-2)))
         conn.close()
         return
 
@@ -54,7 +63,6 @@ def threaded_client(conn, count, game, buff_size=8192):
                 pass
             elif data == 'Ready':
                 game.player_ready(in_game_id)
-                print(f'{game.players[str(in_game_id)].name} is ready')
             elif data == '-':
                 game.sub_bet(in_game_id)
             elif data == '+':
@@ -71,12 +79,59 @@ def threaded_client(conn, count, game, buff_size=8192):
             conn.sendall(pickle.dumps(game))
         except:
             break
-    print('Connection lost')
+    print(f'Player {in_game_id}: Connection lost')
     conn.close()
     game.disconnect(in_game_id)
 
 
+def admin_client(conn, game, buff_size):
+    print('Console login')
+    while True:
+        try:
+            # receive data
+            data = conn.recv(buff_size).decode()
+            
+            # just in case
+            if not data:
+                break
+            
+            cmd = data.split()
+            # Admin console
+            if cmd[0] == 'shutdown':
+                os._exit(1)
+            elif cmd[0] == 'set_money':
+                player_id = int(cmd[1])
+                amount = int(cmd[2])
+                game.set_money(player_id, amount)
+            else:
+                print('Command not found')
+
+            conn.sendall(pickle.dumps(game))
+        except:
+            break
+    print(f'Admin connection lost')
+    conn.close()
+
+
+
+def clear_console():
+    command = 'clear'
+    if os.name in ('nt', 'dos'):
+        command = 'cls'
+    os.system(command)
+
+
 def main():
+    # argparse
+    parser = argparse.ArgumentParser(description='Change parameters for the server')
+    parser.add_argument('-lobby', '--lobby_id', metavar='', type=str, default='', help='Lobby ID for the server')
+    parser.add_argument('-port', '--find_open_port', action='store_true', help='Automatically find open ports')
+
+    args = parser.parse_args()
+
+    LOBBY_ID = args.lobby_id
+    FIND_OPEN_PORT = args.find_open_port
+
     # server info
     hostname = socket.gethostname()
     server = socket.gethostbyname(hostname)
@@ -94,14 +149,23 @@ def main():
         print(e)
 
     server_ip, server_port = s.getsockname()
-
     s.listen()
-    print(f'Server started: ip: {server_ip}, port: {server_port}')
+
+    # print server and lobby details details
+    clear_console()
+    print('SERVER DETAILS:')
+    if LOBBY_ID == '':
+        print('No lobby ID set')
+    else:
+        print(f'Lobby ID: {LOBBY_ID}')
+
+    print(f'Server IP: {server_ip}, Server Port: {server_port}')
     
     game = BlackjackTable()
-    print('Started game. Waiting for a connection')
+    print()
     
     count = 0
+    print('Logs:')
     while True:
         # wait until connection is accepted
         conn, addr = s.accept()
@@ -109,7 +173,7 @@ def main():
         count += 1
 
         # start player
-        start_new_thread(threaded_client, (conn, count, game))
+        start_new_thread(threaded_client, (conn, count, game, LOBBY_ID))
 
 
 if __name__ == '__main__':

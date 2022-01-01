@@ -1,6 +1,6 @@
 import pygame
 from network import Network
-# from blackjack import *
+import argparse
 
 WIDTH = 745
 HEIGHT = 600
@@ -110,6 +110,39 @@ def preprocessing(btns_array, game, player):
     return btns, scene
 
 
+def display_error(err_code):
+    surface = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption(f'ERROR: {err_code}')
+    icon = pygame.image.load('asset/blackjack.png')
+    pygame.display.set_icon(icon)
+    pygame.font.init()
+    clock = pygame.time.Clock()
+
+    if err_code == -1:
+        err_msg = 'Invalid Lobby ID provided'
+    elif err_code == -2:
+        err_msg = 'Lobby is too full'
+    else:
+        err_msg = 'Unknown'
+
+    running = True
+    while running:
+        clock.tick(60)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        
+        # draw on screen
+        surface.fill((0, 0, 0))
+
+        font = pygame.font.SysFont('comicsans', 25)
+        text = font.render(err_msg, True, WHITE)
+        text_rect = text.get_rect(center=(WIDTH/2, HEIGHT/2))
+        surface.blit(text, text_rect)
+        pygame.display.update()
+
+
 def draw(surface, buttons, scene, player, game):
     """Draw the game
 
@@ -181,6 +214,19 @@ def draw(surface, buttons, scene, player, game):
                 y_center = 530 + round(gap_height/2) - round(text.get_height()/2)
                 surface.blit(text, (x_center, y_center))
 
+            # if scene 2, show card total
+            if scene == 2 and player == i:
+                total = player_data.get_card_total()
+                if total > 21:
+                    total_str = 'Bust'
+                else:
+                    total_str = f'Total: {total}'
+                text = font.render(total_str, 1, WHITE)
+                x_center = 30
+                y_center = 30
+                surface.blit(text, (x_center, y_center))
+                
+
             # if scene 3, show if player has won or lost
             if scene == 3 and player == i:
                 status = player_data.has_won
@@ -214,24 +260,44 @@ def draw(surface, buttons, scene, player, game):
 
  
 def main():
+    # argparse
+    parser = argparse.ArgumentParser(description='Change parameters for the game')
+    parser.add_argument('-ip', '--server_ip', metavar='', type=str, required=True, help='IP address of server')
+    parser.add_argument('-port', '--port_no', metavar='', type=int, default=5555, help='Port number from the server')
+    parser.add_argument('-lobby', '--lobby_id', metavar='', type=str, default='', help='Lobby ID for the server')
+    parser.add_argument('-name', '--usrname', metavar='', type=str, default='', help='Name used to join the server')
+
+    args = parser.parse_args()
+
+    SERVER_IP = args.server_ip
+    PORT_NO = args.port_no
+    LOBBY_ID = args.lobby_id
+    USR_NAME = args.usrname
+
     # networking
-    n = Network('192.168.4.69')
+    n = Network(SERVER_IP, port_no=PORT_NO, lobby_id=LOBBY_ID, name=USR_NAME)
 
     # get return message from server
-    msg = n.getP()
+    msg = int(n.getP())
 
-    if msg == 'Invalid lobby':
-        print('Invalid lobby ID')
-        return
-    elif msg == 'Lobby full':
-        print('Lobby is too full')
+    # if msg -1, -2, ....., there's an error
+    if msg < 0:
+        display_error(msg)
         return
 
     player = int(msg)
     print(f'You are: Player {player}')
 
+    # get game state
+    try:
+        game = n.send("get")
+    except:
+        print('Error when requesting board config')
+
+    player_name = game.players[str(player)].name
+
     surface = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption(f'Blackjack: {player}')
+    pygame.display.set_caption(f'Blackjack: {player_name}')
     icon = pygame.image.load('asset/blackjack.png')
     pygame.display.set_icon(icon)
     pygame.font.init()
@@ -256,19 +322,34 @@ def main():
             print('Error when requesting board config')
             break
 
+        # extract information
+        if game == None:
+            break
+        
+        btns, scene = preprocessing(btn_array, game, player)
+
         # process events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            # send button presses to the server
             if event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
                 for btn in btns:
                     # send button information to server
                     if btn.click(pos):
                         n.send(btn.text)
-        
-        # extract information
-        btns, scene = preprocessing(btn_array, game, player)
+            
+            # send keyboard presses to the server
+            if event.type == pygame.KEYDOWN:
+                if scene == 1:
+                    if event.key == pygame.K_LEFT:
+                        n.send('-')
+                    elif event.key == pygame.K_RIGHT:
+                        n.send('+')
+
+
 
         # display
         draw(surface, btns, scene, player, game)
