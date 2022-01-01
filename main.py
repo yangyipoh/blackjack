@@ -215,7 +215,7 @@ def draw(surface, buttons, scene, player, game):
  
 def main():
     # networking
-    n = Network('192.168.1.108')
+    n = Network('192.168.4.69')
 
     # get return message from server
     msg = n.getP()

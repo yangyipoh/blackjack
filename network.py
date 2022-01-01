@@ -2,7 +2,7 @@ import socket
 import pickle
 
 class Network:
-    def __init__(self, server_ip, port_no=5555, buff_size=8192, lobby_id='', name=''):
+    def __init__(self, server_ip, port_no=5555, buff_size=8192, lobby_id='', name='Poh'):
         """Creates a network class to handle network functionality for the client
 
         Args:
