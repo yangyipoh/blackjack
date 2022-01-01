@@ -1,8 +1,16 @@
 from network import Network
 import argparse
+import os
 
 
 ADMIN_KEY = 'kYeVsv1o2qfuBUP508rl'
+
+
+def clear_console():
+    command = 'clear'
+    if os.name in ('nt', 'dos'):
+        command = 'cls'
+    os.system(command)
 
 
 def main():
@@ -19,6 +27,8 @@ def main():
     LOBBY_ID = args.lobby_id
 
     n = Network(SERVER_IP, port_no=PORT_NO, lobby_id=LOBBY_ID, name=ADMIN_KEY)
+
+    clear_console()
 
     while True:
         cmd = input()

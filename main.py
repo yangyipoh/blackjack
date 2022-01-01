@@ -262,7 +262,7 @@ def draw(surface, buttons, scene, player, game):
 def main():
     # argparse
     parser = argparse.ArgumentParser(description='Change parameters for the game')
-    parser.add_argument('-ip', '--server_ip', metavar='', type=str, required=True, help='IP address of server')
+    parser.add_argument('-ip', '--server_ip', metavar='', type=str, required=True, help='IP address of server (REQUIRED)')
     parser.add_argument('-port', '--port_no', metavar='', type=int, default=5555, help='Port number from the server')
     parser.add_argument('-lobby', '--lobby_id', metavar='', type=str, default='', help='Lobby ID for the server')
     parser.add_argument('-name', '--usrname', metavar='', type=str, default='', help='Name used to join the server')
