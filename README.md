@@ -54,6 +54,18 @@ This is similar to when the player joins. Once the admin joins, they are present
 ```set_money [player_id] [amount]``` will set [amount] of money for Player [player_id] whereby player_id=0 is the leftmost player and player_id=4 is the rightmost player.
 
 
+## Gameplay
+The game will start once all the player has pressed the READY button (Don't press the ready button before everyone has joined or else the game will start immediately). The button should turn green when the player presses the READY button.
+<img src="asset/gameplay1.png" alt="gameplay1" style="width:100%">
+Once all the players have pressed ready, the players will be brought to the place bet screen. Here, each player can place their bets and hit the BET button once they're satisfied with the amount they've placed. The button will turn green once the player has locked in their bets. The player can either use the on screen buttons or use their arrow key to increase or decrease their bets.
+<img src="asset/gameplay2.png" alt="gameplay2" style="width:100%">
+As soon as all the players have placed their bets, the players will start playing blackjack. It will be the players turn when the buttons turn green for them. The players card total will be shown at the top left of the screen.
+<img src="asset/gameplay3.png" alt="gameplay3" style="width:100%">
+Once all the players have had their turn, the dealer will have its turn. The verdict will be shown at the top left of the screen. Once everyone is satisfied, they can press the CONTINUE button and move onto the next round. This will bring each player to the first screen again.
+<img src="asset/gameplay4.png" alt="gameplay4" style="width:100%">
+Once all the players are brought to the main screen, other players can join the game at this point.
+
+
 ## Credits
 * <div>Icons made by <a href="https://www.flaticon.com/authors/darius-dan" title="Darius Dan">Darius Dan</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 * <div>Cards are obtained from this website <a href="https://tekeye.uk/playing_cards/svg-playing-cards" title="cards">HERE</a></div>
